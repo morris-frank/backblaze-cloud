@@ -23,8 +23,8 @@ $primary: hsl(100, 27%, 50%);
         }
 
         img {
-            width: auto;
-            height: 71%;
+            max-width: 100%;
+            max-height: 71%;
             margin: 0 auto 0.2em;
             display: block;
         }

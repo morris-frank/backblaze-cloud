@@ -16,7 +16,7 @@ cloud.set_bucket(config.bucket_name, config.application_key_id, config.applicati
 
 @app.listener('after_server_start')
 def create_task_queue(app, loop):
-    app.thumbnail_queue = asyncio.Queue(maxsize=1_000)
+    app.thumbnail_queue = asyncio.LifoQueue(maxsize=1_000)
     app.add_task(cloud.data.thumbnail_worker(app.thumbnail_queue))
 
 

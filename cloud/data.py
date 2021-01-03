@@ -2,6 +2,8 @@ import queue
 import shelve
 import asyncio
 from pathlib import Path
+import shutil
+from rich.console import Console
 
 from b2sdk.v1 import (
     InMemoryAccountInfo,
@@ -12,6 +14,8 @@ from b2sdk.v1 import (
 from PIL import Image
 
 from . import paths, content_types
+
+console = Console()
 
 SHELVE = shelve.open(str(paths.shelve), writeback=True)
 THUMB_MQ = queue.Queue()
@@ -53,7 +57,6 @@ async def generate_thumb(file_id: str):
     thumbnail = paths.thumbs.joinpath(file_id + ".jpg")
     await download(file_id, str(thumbnail))
     await convert_to_thumb(thumbnail)
-    print(f"Generated {file_id}")
 
 
 def ls(path) -> (list, list):
@@ -105,6 +108,8 @@ async def thumbnail_worker(queue):
     while True:
         if not queue.empty():
             file_id = await queue.get()
+            console.log(f"[yellow]thumbnails[/yellow] [green]{queue.qsize()}[/green] [yellow]remaining[/yellow]")
+
             await generate_thumb(file_id)
         await asyncio.sleep(5)
 
