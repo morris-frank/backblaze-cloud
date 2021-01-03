@@ -6,7 +6,7 @@ authors = ["Maurice Frank <maurice.frank@posteo.de>"]
 license = "GPL-3.0"
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = "^3.8.5"
 sanic = "^20.12.0"
 sanic-jinja2 = "^0.8.0"
 rich = "^9.6.1"
