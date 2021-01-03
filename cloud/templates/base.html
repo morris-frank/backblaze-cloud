@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Cloud</title>
+        <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+
+        <link rel=stylesheet type=text/css href="/static/main.css">
+    </head>
+    <body>
+        <div class="breadcrumb">
+            {% if breadcrumb %}
+            <ul>
+                {% for crumb in breadcrumb %}
+                    <li><a href="{{ crumb.link }}">{{ crumb.name }}</a></li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+        </div>
+        <div class="folder">
+            {% block content %}{% endblock %}
+        </div>
+    </body>
+</html>

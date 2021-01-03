@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+
+{% block content %}
+{% for folder in folders %}
+<a href="/{{ folder.path }}">
+    <img src="/static/icons/folder.svg">
+    <div class="name">{{ folder.name }}</div>
+</a>
+{% endfor %}
+
+{% for file in files %}
+<a href="/{{ file.path }}">
+    <div class="meta">{{ file.size }}</div>
+    {% if file.thumbnail %}
+    <img src="{{ file.thumbnail }}">
+    {% endif %}
+    <span class="name">{{ file.name }}</span>
+</a>
+{% endfor %}
+{% endblock %}

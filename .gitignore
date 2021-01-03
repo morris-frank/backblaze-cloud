@@ -1,0 +1,5 @@
+.python-version
+config.py
+static/thumbnails
+static/.webassets-cache
+.cache
