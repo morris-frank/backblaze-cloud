@@ -1,5 +1,8 @@
+import queue
 import shelve
+import asyncio
 from pathlib import Path
+
 from b2sdk.v1 import (
     InMemoryAccountInfo,
     B2Api,
@@ -8,17 +11,13 @@ from b2sdk.v1 import (
 )
 from PIL import Image
 
-from .settings import SHELVE_PATH, THUMB_PATH, home_path
+from . import paths, content_types
 
-__all__ = ["File", "Folder", "ls", "set_bucket"]
+SHELVE = shelve.open(str(paths.shelve), writeback=True)
+THUMB_MQ = queue.Queue()
 
-SHELVE = shelve.open(str(SHELVE_PATH))
 BUCKET = None
 B2API = None
-
-IMG_TYPES = "image/jpeg"
-VIDEO_TYPES = "video/mp4"
-
 
 def set_bucket(bucket_name: str, application_key_id: str, application_key: str):
     global BUCKET, B2API
@@ -37,18 +36,24 @@ def humanize_bytes(size: int) -> str:
         return f"{size/1e9:.1f}Gb"
 
 
-def download(file_id: str, path: str):
+async def download(file_id: str, path: str):
     global B2API
     download_dest = DownloadDestLocalFile(path)
     progress_listener = DoNothingProgressListener()
     B2API.download_file_by_id(file_id, download_dest, progress_listener)
 
 
-def convert_to_thumb(path: str):
+async def convert_to_thumb(path: str):
     im = Image.open(path)
     im.thumbnail((128, 128), Image.ANTIALIAS)
     im.save(path, "JPEG")
-    print(f"Thumbed {path}")
+
+
+async def generate_thumb(file_id: str):
+    thumbnail = paths.thumbs.joinpath(file_id + ".jpg")
+    await download(file_id, str(thumbnail))
+    await convert_to_thumb(thumbnail)
+    print(f"Generated {file_id}")
 
 
 def ls(path) -> (list, list):
@@ -56,7 +61,6 @@ def ls(path) -> (list, list):
     if idx in SHELVE:
         return SHELVE[idx]
     else:
-        print(f"{idx} not in shelve")
         folders, files = [], []
         for file_info, folder_name in BUCKET.ls(str(path), show_versions=False):
             if folder_name is not None:
@@ -64,6 +68,7 @@ def ls(path) -> (list, list):
             else:
                 files.append(File(file_info))
         SHELVE[idx] = (folders, files)
+        SHELVE.sync()
         return SHELVE[idx]
 
 
@@ -77,17 +82,16 @@ class File:
         self.size = humanize_bytes(file_info.size)
         self.id = file_info.id_
 
-        if self.type in IMG_TYPES:
-            self.gen_thumb()
-        elif self.type in VIDEO_TYPES:
+    def get_thumbnail(self, queue):
+        if self.type in content_types.video:
             self.thumbnail = "/static/icons/video.svg"
-
-    def gen_thumb(self):
-        thumbnail = THUMB_PATH.joinpath(self.id + ".jpg")
-        if not thumbnail.exists():
-            download(self.id, str(thumbnail))
-            convert_to_thumb(thumbnail)
-        self.thumbnail = "/" + str(thumbnail.relative_to(home_path))
+        elif self.type in content_types.images:
+            thumbnail = paths.thumbs.joinpath(self.id + ".jpg")
+            self.thumbnail = "/" + str(thumbnail.relative_to(paths.home))
+            if not thumbnail.exists():
+                shutil.copy(paths.static.joinpath("icons", "cache.png"), thumbnail)
+                queue.put_nowait(self.id)
+                
 
 
 class Folder:
@@ -95,3 +99,12 @@ class Folder:
         self.path = Path(path)
         self.name = self.path.name
         self.parent = self.path.parent
+
+
+async def thumbnail_worker(queue):
+    while True:
+        if not queue.empty():
+            file_id = await queue.get()
+            await generate_thumb(file_id)
+        await asyncio.sleep(5)
+
