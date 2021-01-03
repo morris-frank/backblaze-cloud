@@ -1,7 +1,8 @@
+import asyncio
+
 from sanic import Sanic
 from sanic import response
 from sanic_jinja2 import SanicJinja2
-import asyncio
 
 import cloud
 import config
@@ -13,7 +14,7 @@ jinja = SanicJinja2(app, pkg_name="cloud")
 cloud.set_bucket(config.bucket_name, config.application_key_id, config.application_key)
 
 
-@app.listener('after_server_start')
+@app.listener("after_server_start")
 def create_task_queue(app, loop):
     app.thumbnail_queue = asyncio.LifoQueue(maxsize=1_000)
 

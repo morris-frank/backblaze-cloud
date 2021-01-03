@@ -1,10 +1,11 @@
-import queue
-from random import randint
-import shelve
-import asyncio
-from pathlib import Path
-import shutil
 from functools import partial
+from pathlib import Path
+from random import randint
+import asyncio
+import queue
+import shelve
+import shutil
+from concurrent.futures import ThreadPoolExecutor
 
 from rich.console import Console
 from b2sdk.v1 import (
@@ -16,8 +17,6 @@ from b2sdk.v1 import (
 from PIL import Image
 
 from . import paths, content_types
-
-from concurrent.futures import ThreadPoolExecutor
 
 
 _executor = ThreadPoolExecutor(16)
@@ -88,6 +87,7 @@ def ls(path: str) -> (list, list):
         SHELVE.sync()
         return SHELVE[idx]
 
+
 def cache_file(path: str):
     file = SHELVE[path]
     target = paths.data.joinpath(file.path)
@@ -128,8 +128,9 @@ class Folder:
 async def thumbnail_worker(name, queue):
     while True:
         file_id = await queue.get()
-        console.log(f"[yellow]{name}[/yellow] [green]{queue.qsize()}[/green] [yellow]remaining[/yellow]")
+        console.log(
+            f"[yellow]{name}[/yellow] [green]{queue.qsize()}[/green] [yellow]remaining[/yellow]"
+        )
         loop = asyncio.get_event_loop()
         # For now the thumbnail generator is synchronous
         await loop.run_in_executor(_executor, partial(generate_thumb, file_id))
-
