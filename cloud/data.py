@@ -1,10 +1,12 @@
 import queue
+from random import randint
 import shelve
 import asyncio
 from pathlib import Path
 import shutil
-from rich.console import Console
+from functools import partial
 
+from rich.console import Console
 from b2sdk.v1 import (
     InMemoryAccountInfo,
     B2Api,
@@ -15,6 +17,11 @@ from PIL import Image
 
 from . import paths, content_types
 
+from concurrent.futures import ThreadPoolExecutor
+
+
+_executor = ThreadPoolExecutor(16)
+
 console = Console()
 
 SHELVE = shelve.open(str(paths.shelve), writeback=True)
@@ -22,6 +29,7 @@ THUMB_MQ = queue.Queue()
 
 BUCKET = None
 B2API = None
+
 
 def set_bucket(bucket_name: str, application_key_id: str, application_key: str):
     global BUCKET, B2API
@@ -40,26 +48,30 @@ def humanize_bytes(size: int) -> str:
         return f"{size/1e9:.1f}Gb"
 
 
-async def download(file_id: str, path: str):
+def download(file_id: str, path: str):
     global B2API
     download_dest = DownloadDestLocalFile(path)
     progress_listener = DoNothingProgressListener()
     B2API.download_file_by_id(file_id, download_dest, progress_listener)
 
 
-async def convert_to_thumb(path: str):
+def convert_to_thumb(path: str):
     im = Image.open(path)
     im.thumbnail((128, 128), Image.ANTIALIAS)
     im.save(path, "JPEG")
 
 
-async def generate_thumb(file_id: str):
+def generate_thumb(file_id: str):
     thumbnail = paths.thumbs.joinpath(file_id + ".jpg")
-    await download(file_id, str(thumbnail))
-    await convert_to_thumb(thumbnail)
+    download(file_id, str(thumbnail))
+    convert_to_thumb(thumbnail)
 
 
-def ls(path) -> (list, list):
+def is_file(path: str):
+    return path in SHELVE
+
+
+def ls(path: str) -> (list, list):
     idx = f"{BUCKET.name}/{path}"
     if idx in SHELVE:
         return SHELVE[idx]
@@ -69,10 +81,20 @@ def ls(path) -> (list, list):
             if folder_name is not None:
                 folders.append(Folder(folder_name))
             else:
-                files.append(File(file_info))
+                file = File(file_info)
+                SHELVE[str(file.path)] = file
+                files.append(file)
         SHELVE[idx] = (folders, files)
         SHELVE.sync()
         return SHELVE[idx]
+
+def cache_file(path: str):
+    file = SHELVE[path]
+    target = paths.data.joinpath(file.path)
+    if not target.exists():
+        target.parent.mkdir(parents=True, exist_ok=True)
+        download(file.id, target)
+    return "/" + str(target.relative_to(paths.home))
 
 
 class File:
@@ -94,7 +116,6 @@ class File:
             if not thumbnail.exists():
                 shutil.copy(paths.static.joinpath("icons", "cache.png"), thumbnail)
                 queue.put_nowait(self.id)
-                
 
 
 class Folder:
@@ -104,12 +125,11 @@ class Folder:
         self.parent = self.path.parent
 
 
-async def thumbnail_worker(queue):
+async def thumbnail_worker(name, queue):
     while True:
-        if not queue.empty():
-            file_id = await queue.get()
-            console.log(f"[yellow]thumbnails[/yellow] [green]{queue.qsize()}[/green] [yellow]remaining[/yellow]")
-
-            await generate_thumb(file_id)
-        await asyncio.sleep(5)
+        file_id = await queue.get()
+        console.log(f"[yellow]{name}[/yellow] [green]{queue.qsize()}[/green] [yellow]remaining[/yellow]")
+        loop = asyncio.get_event_loop()
+        # For now the thumbnail generator is synchronous
+        await loop.run_in_executor(_executor, partial(generate_thumb, file_id))
 

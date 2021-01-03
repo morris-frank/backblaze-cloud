@@ -54,6 +54,18 @@ $primary: hsl(100, 27%, 50%);
     }
 }
 
+.file {
+    img {
+        max-width: 95%;
+        max-height: 92vh;
+        margin: 0 auto;
+        display: block;
+        border: 0.3em solid #ddd;
+        border-radius: 4px;
+        box-shadow: 0 4px 2px #aaa;
+    }
+}
+
 .breadcrumb {
     ul {
         align-items: flex-start;
