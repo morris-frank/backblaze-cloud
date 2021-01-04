@@ -1,35 +1,57 @@
 $primary: hsl(100, 27%, 50%);
 
+body {
+    color: #222;
+    background-color: #fafafa;
+}
+
 .folder {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+
     a {
-        height: 120px;
-        width: 150px;
+        color: #333;
+        height: 170px;
+        width: 200px;
         margin: 0.3em;
         box-sizing: border-box;
-        padding: 0.4em;
-        box-shadow: 0px 2px 1px rgba(0,0,0,0.2);
-        background-color: rgba($primary, 0.4);
-        border: 1px solid grey;
+        box-shadow: 0px 3px 3px rgba(0, 0, 0, 0.1);
+        background-color: white;
+        border: 1px solid #ccc;
         border-radius: 3px;
-        color: #222;
         text-decoration: none;
         float: left;
         transition: 100ms;
         position: relative;
+        overflow: hidden;
         
         &:hover {
-            box-shadow: 0px 4px 3px rgba(0,0,0,0.2);
-            background-color: rgba($primary, 0.6);
+            box-shadow: 0px 3px 3px rgba(0, 0, 0, 0.15);
+            background-color: rgba(0, 0, 0, 0.01);
         }
 
-        img {
-            max-width: 100%;
-            max-height: 71%;
-            margin: 0 auto 0.2em;
-            display: block;
+        .thumb {
+            width: 100%;
+            height: 79%;
+            margin-bottom: 0.4em;
+            overflow: hidden;
+            
+            img {
+                min-width: 100%;
+                min-height: 100%;
+
+                &.svg {
+                    min-width: unset;
+                    display: block;
+                    margin: 0 auto;
+                }
+            }
         }
 
         .name {
+            padding: 0 0.4em 0 1em;
             font-size: 0.7em;
             word-wrap: anywhere;
             display: inline-block;
@@ -39,17 +61,19 @@ $primary: hsl(100, 27%, 50%);
         .meta {
             font-size: 0.7em;
             position: absolute;
-            right: 3px;
-            top: 3px;
+            right: 0;
+            top: 0;
             display: none;
-            border-radius: 4px;
-            background-color: white;
-            padding: 0.2em;
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 0.4em;
+            z-index: 2;
             text-align: right;
         }
 
-        &:hover .meta {
-            display: block;
+        &:hover {
+            .meta {
+                display: block;
+            }
         }
     }
 }
@@ -86,11 +110,10 @@ $primary: hsl(100, 27%, 50%);
     }
 
     a {
-        margin: 0 .3em;
-        background-color: rgba($primary, 0.2);
-        border: 1px solid grey;
-        border-radius: 3px;
         color: #222;
+        margin: 0 .3em;
+        background-color: white;
+        border: 1px solid #ccc;
         text-decoration: none;
         padding: 0.02em 0.4em;
     }

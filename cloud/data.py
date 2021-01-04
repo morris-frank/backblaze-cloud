@@ -110,6 +110,7 @@ class File:
     def get_thumbnail(self, queue):
         if self.type in content_types.video:
             self.thumbnail = "/static/icons/video.svg"
+            self.thumbnail_classlist = "svg"
         elif self.type in content_types.images:
             thumbnail = paths.thumbs.joinpath(self.id + ".jpg")
             self.thumbnail = "/" + str(thumbnail.relative_to(paths.home))
