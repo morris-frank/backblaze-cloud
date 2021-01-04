@@ -23,7 +23,7 @@ class __B2:
         self.api.download_file_by_id(file_id, download_dest, progress_listener)
 
     def ls(self, path: str) -> (list, list):
-        path = path.strip('/')
+        path = path.strip("/")
         console.log(f"[yellow]ls [/yellow] [green]{path}[/green]")
 
         if not ls_cache.is_cached_folder(path):
@@ -46,11 +46,5 @@ class __B2:
             self.download(file_id, cached_file)
         return f"/{cached_file.relative_to(paths.home)}"
 
+
 B2 = __B2()
-
-
-
-
-
-
-

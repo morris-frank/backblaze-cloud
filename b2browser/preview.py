@@ -88,7 +88,7 @@ def queue(files, queue):
 async def worker(name: str, queue, executor):
     while True:
         file_path = await queue.get()
-        
+
         # For now the thumbnail generator is synchronous
         loop = asyncio.get_event_loop()
         await loop.run_in_executor(executor, partial(make_preview, file_path))
@@ -96,4 +96,3 @@ async def worker(name: str, queue, executor):
         console.log(
             f"[yellow]{name}[/yellow] [green]{queue.qsize()}[/green] [yellow]remain[/yellow]"
         )
-

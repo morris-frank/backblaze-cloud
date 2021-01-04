@@ -14,12 +14,17 @@ app.static("/static", "./static")
 auth = HTTPBasicAuth()
 jinja = SanicJinja2(app, pkg_name="b2browser")
 
-b2browser.B2.setup(config.application_key_id, config.application_key, config.bucket_name)
+b2browser.B2.setup(
+    config.application_key_id, config.application_key, config.bucket_name
+)
 
 
 @auth.verify_password
 def verify_password(username, password):
-    return username == config.username and b2browser.utils.hash_password(config.app_salt, password) == config.password
+    return (
+        username == config.username
+        and b2browser.utils.hash_password(config.app_salt, password) == config.password
+    )
 
 
 @app.listener("after_server_start")
@@ -28,7 +33,11 @@ def create_task_queue(app, loop):
     app.thread_executor = ThreadPoolExecutor(config.thread_pool_size)
 
     for i in range(config.thread_pool_size):
-        app.add_task(b2browser.preview.worker(f"thumbnail_{i}", app.thumbnail_queue, app.thread_executor))
+        app.add_task(
+            b2browser.preview.worker(
+                f"thumbnail_{i}", app.thumbnail_queue, app.thread_executor
+            )
+        )
 
 
 @jinja.template("file.html")
