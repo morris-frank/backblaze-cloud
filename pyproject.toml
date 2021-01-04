@@ -12,6 +12,7 @@ sanic-jinja2 = "^0.8.0"
 rich = "^9.6.1"
 b2sdk = "^1.2.0"
 pillow = "^8.1.0"
+Sanic-HTTPAuth = "^0.2.0"
 
 [tool.poetry.dev-dependencies]
 
