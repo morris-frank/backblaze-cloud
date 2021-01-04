@@ -5,3 +5,5 @@ bucket_name = "BUCKET_NAME"
 app_salt = "I'm salting salting, why so salty"
 username = "ROOT"
 password = "PASS"
+
+thread_pool_size = 4
