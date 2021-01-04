@@ -14,3 +14,6 @@ cache = home.joinpath(".cache")
 cache.mkdir(exist_ok=True)
 
 shelve = cache.joinpath("shelve")
+
+thumb_cache = cache.joinpath("thumbnails")
+thumb_cache.mkdir(exist_ok=True)

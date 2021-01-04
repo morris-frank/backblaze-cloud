@@ -43,19 +43,22 @@ def download(file_id: str, path: str):
     B2API.download_file_by_id(file_id, download_dest, progress_listener)
 
 
-def convert_to_thumb(path: str):
-    im = Image.open(path)
+def convert_to_thumb(inp: Path, out: Path):
+    im = Image.open(inp)
     o_width, o_height = 200, 150
     factor = max(o_width / im.width, o_height / im.height)
     width, height = round(im.width * factor), round(im.height * factor)
     im = im.resize((width, height), resample=Image.LANCZOS)
-    im.save(path, "JPEG")
+    im.save(out, "JPEG")
 
 
 def generate_thumb(file_id: str):
-    thumbnail = paths.thumbs.joinpath(file_id + ".jpg")
-    download(file_id, str(thumbnail))
-    convert_to_thumb(thumbnail)
+    fname = file_id + ".jpg"
+    cached = paths.thumb_cache.joinpath(fname)
+    thumbed = paths.thumbs.joinpath(fname)
+    download(file_id, str(cached))
+    convert_to_thumb(cached, thumbed)
+    cached.unlink()
 
 
 def is_file(path: str):
@@ -73,13 +76,11 @@ def ls(path: str) -> (list, list):
             if folder_path is not None:
                 if not folder_path in SHELVE:
                     SHELVE[folder_path] = Folder(folder_path)
-                    console.log(f"[yellow]append folder[/yellow] [green]{folder_path}[/green]")
                 folders.append(folder_path)
             else:
                 file_path = file_info.file_name
                 if not file_path in SHELVE:
                     SHELVE[file_path] = File(file_info)
-                    console.log(f"[yellow]shelve[/yellow] [green]{file_path}[/green]")
                 files.append(file_path)
         SHELVE[path] = Folder(path, folders, files)
         SHELVE.sync()
@@ -125,7 +126,6 @@ class Folder:
         return folders, files
 
 
-
 def queue_thumbnails(files, queue):
     for file in files:
         if hasattr(file, "thumbnail"):
@@ -154,4 +154,5 @@ async def thumbnail_worker(name, queue):
         file.thumbnail = "/" + str(paths.thumbs.joinpath(file.id + ".jpg").relative_to(paths.home))
         file.thumb_ext = "jpg"
         SHELVE[file_path] = file
+        SHELVE.sync()
 

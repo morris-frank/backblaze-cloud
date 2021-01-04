@@ -31,15 +31,10 @@ a {
       display: flex;
       justify-content: center;
       align-items: center; }
-      .folder a .thumb img {
-        min-width: 100%;
-        min-height: 100%; }
       .folder a .thumb.svg {
         height: 50px; }
         .folder a .thumb.svg img {
-          min-width: unset;
-          display: block;
-          margin: 0 auto; }
+          height: 100%; }
     .folder a .name {
       font-size: 0.7em;
       word-wrap: anywhere;
