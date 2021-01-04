@@ -52,6 +52,9 @@ def make_preview(file_path: str):
     file = ls_cache.LS_CACHE[file_path]
     preview = preview_types[file.preview_type]
 
+    if preview_path(file.id).exists():
+        return
+
     if hasattr(preview, "make_preview"):
         # Download the file to the local thumbnail cache folder
         cached_file = paths.thumbnail_cache.joinpath(file.id)

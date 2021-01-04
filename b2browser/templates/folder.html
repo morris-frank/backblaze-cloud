@@ -10,7 +10,9 @@
         <div class="name">{{ folder.name }}</div>
     </a>
     {% endfor %}
+</div>
 
+<div class="folder">
     {% for file in files %}
     <a href="/{{ file.path }}">
         <div class="meta">{{ file.size }}<br>{{ file.type }}</div>

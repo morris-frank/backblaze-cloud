@@ -29,7 +29,7 @@ def verify_password(username, password):
 
 @app.listener("after_server_start")
 def create_task_queue(app, loop):
-    app.thumbnail_queue = asyncio.LifoQueue(maxsize=400)
+    app.thumbnail_queue = asyncio.LifoQueue(maxsize=10_000)
     app.thread_executor = ThreadPoolExecutor(config.thread_pool_size)
 
     for i in range(config.thread_pool_size):

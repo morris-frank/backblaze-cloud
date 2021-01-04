@@ -31,6 +31,8 @@ a {
       display: flex;
       justify-content: center;
       align-items: center; }
+      .folder a .thumb img[src$=".svg"] {
+        height: 100%; }
       .folder a .thumb.svg {
         height: 50px; }
         .folder a .thumb.svg img {

@@ -39,7 +39,11 @@ a {
             display: flex;
             justify-content: center;
             align-items: center;
-            
+
+            img[src$=".svg"] {
+                height: 100%;
+            }
+
             &.svg {
                 height: 50px;
 
