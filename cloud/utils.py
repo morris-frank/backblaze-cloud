@@ -1,3 +1,4 @@
+import hashlib
 from collections import namedtuple
 
 BreadCrumb = namedtuple("BreadCrumb", ["name", "link"])
@@ -19,3 +20,7 @@ def humanize_bytes(size: int) -> str:
     else:
         return f"{size/1e9:.1f}Gb"
 
+
+def hash_password(salt, password):
+    salted = password + salt
+    return hashlib.sha512(salted.encode("utf8")).hexdigest()

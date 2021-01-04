@@ -3,15 +3,22 @@ import asyncio
 from sanic import Sanic
 from sanic import response
 from sanic_jinja2 import SanicJinja2
+from sanic_httpauth import HTTPBasicAuth
 
 import cloud
 import config
 
 app = Sanic("cloud")
 app.static("/static", "./static")
+auth = HTTPBasicAuth()
 jinja = SanicJinja2(app, pkg_name="cloud")
 
 cloud.set_bucket(config.bucket_name, config.application_key_id, config.application_key)
+
+
+@auth.verify_password
+def verify_password(username, password):
+    return username == config.username and cloud.utils.hash_password(config.app_salt, password) == config.password
 
 
 @app.listener("after_server_start")
@@ -44,11 +51,13 @@ async def folder(request, path):
 
 
 @app.route("/")
+@auth.login_required
 async def root(request):
     return await folder(request, "")
 
 
 @app.route("/<path:path>")
+@auth.login_required
 async def non_root(request, path: str):
     if cloud.data.is_file(path):
         return await single(request, path)
