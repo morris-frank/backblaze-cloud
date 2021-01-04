@@ -1,48 +1,51 @@
 body {
   color: #222;
-  background-color: #fafafa; }
+  background-color: #fafafa;
+  font-size: 1rem; }
+
+a {
+  color: #222; }
 
 .folder {
   display: flex;
-  flex-wrap: wrap;
+  flex-flow: row wrap;
+  align-items: flex-start;
   justify-content: center;
   gap: 10px; }
   .folder a {
-    color: #333;
-    height: 170px;
     width: 200px;
-    margin: 0.3em;
-    box-sizing: border-box;
     box-shadow: 0px 3px 3px rgba(0, 0, 0, 0.1);
     background-color: white;
     border: 1px solid #ccc;
     border-radius: 3px;
     text-decoration: none;
-    float: left;
     transition: 100ms;
-    position: relative;
-    overflow: hidden; }
+    position: relative; }
     .folder a:hover {
       box-shadow: 0px 3px 3px rgba(0, 0, 0, 0.15);
       background-color: rgba(0, 0, 0, 0.01); }
     .folder a .thumb {
-      width: 100%;
-      height: 79%;
-      margin-bottom: 0.4em;
-      overflow: hidden; }
+      width: 200px;
+      height: 150px;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center; }
       .folder a .thumb img {
         min-width: 100%;
         min-height: 100%; }
-        .folder a .thumb img.svg {
+      .folder a .thumb.svg {
+        height: 50px; }
+        .folder a .thumb.svg img {
           min-width: unset;
           display: block;
           margin: 0 auto; }
     .folder a .name {
-      padding: 0 0.4em 0 1em;
       font-size: 0.7em;
       word-wrap: anywhere;
       display: inline-block;
-      line-height: 1.2; }
+      line-height: 1.2;
+      margin: 0.5em 0.4em 0.5em 1em; }
     .folder a .meta {
       font-size: 0.7em;
       position: absolute;
@@ -65,25 +68,24 @@ body {
   border-radius: 4px;
   box-shadow: 0 4px 2px #aaa; }
 
-.breadcrumb ul {
-  align-items: flex-start;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-start;
-  padding: 0; }
-
-.breadcrumb li {
-  align-items: center;
-  display: flex; }
-
-.breadcrumb li + li::before {
-  color: #b5b5b5;
-  content: "\0002f"; }
-
-.breadcrumb a {
-  color: #222;
-  margin: 0 .3em;
-  background-color: white;
-  border: 1px solid #ccc;
-  text-decoration: none;
-  padding: 0.02em 0.4em; }
+.breadcrumb {
+  font-size: 1.1rem;
+  max-width: 100%;
+  overflow-x: auto;
+  margin: 1em 0; }
+  .breadcrumb ul {
+    display: flex;
+    padding: 0;
+    margin: 1em 0; }
+  .breadcrumb li {
+    display: flex; }
+  .breadcrumb li + li::before {
+    color: #b5b5b5;
+    content: "\0002f"; }
+  .breadcrumb a {
+    margin: 0 .3em;
+    background-color: white;
+    border: 1px solid #ccc;
+    text-decoration: none;
+    padding: 0.1em 0.4em;
+    border-radius: 4px; }

@@ -2,7 +2,6 @@ from functools import partial
 from pathlib import Path
 from random import randint
 import asyncio
-import queue
 import shelve
 import shutil
 from concurrent.futures import ThreadPoolExecutor
@@ -16,7 +15,7 @@ from b2sdk.v1 import (
 )
 from PIL import Image
 
-from . import paths, content_types
+from . import paths, content_types, utils
 
 
 _executor = ThreadPoolExecutor(16)
@@ -24,7 +23,6 @@ _executor = ThreadPoolExecutor(16)
 console = Console()
 
 SHELVE = shelve.open(str(paths.shelve), writeback=True)
-THUMB_MQ = queue.Queue()
 
 BUCKET = None
 B2API = None
@@ -38,15 +36,6 @@ def set_bucket(bucket_name: str, application_key_id: str, application_key: str):
     BUCKET = B2API.get_bucket_by_name(bucket_name)
 
 
-def humanize_bytes(size: int) -> str:
-    if size < 0.5e6:
-        return f"{size/1e3:.1f}Kb"
-    elif size < 0.5e9:
-        return f"{size/1e6:.1f}Mb"
-    else:
-        return f"{size/1e9:.1f}Gb"
-
-
 def download(file_id: str, path: str):
     global B2API
     download_dest = DownloadDestLocalFile(path)
@@ -56,7 +45,10 @@ def download(file_id: str, path: str):
 
 def convert_to_thumb(path: str):
     im = Image.open(path)
-    im.thumbnail((128, 128), Image.ANTIALIAS)
+    o_width, o_height = 200, 150
+    factor = max(o_width / im.width, o_height / im.height)
+    width, height = round(im.width * factor), round(im.height * factor)
+    im = im.resize((width, height), resample=Image.LANCZOS)
     im.save(path, "JPEG")
 
 
@@ -67,25 +59,31 @@ def generate_thumb(file_id: str):
 
 
 def is_file(path: str):
-    return path in SHELVE
+    return path in SHELVE and isinstance(SHELVE[path], File)
 
 
 def ls(path: str) -> (list, list):
-    idx = f"{BUCKET.name}/{path}"
-    if idx in SHELVE:
-        return SHELVE[idx]
+    path = path.strip('/')
+    console.log(f"[yellow]ls [/yellow] [green]{path}[/green]")
+    if path in SHELVE and not SHELVE[path].is_empty():
+        return SHELVE[path]
     else:
         folders, files = [], []
-        for file_info, folder_name in BUCKET.ls(str(path), show_versions=False):
-            if folder_name is not None:
-                folders.append(Folder(folder_name))
+        for file_info, folder_path in BUCKET.ls(path, show_versions=False):
+            if folder_path is not None:
+                if not folder_path in SHELVE:
+                    SHELVE[folder_path] = Folder(folder_path)
+                    console.log(f"[yellow]append folder[/yellow] [green]{folder_path}[/green]")
+                folders.append(folder_path)
             else:
-                file = File(file_info)
-                SHELVE[str(file.path)] = file
-                files.append(file)
-        SHELVE[idx] = (folders, files)
+                file_path = file_info.file_name
+                if not file_path in SHELVE:
+                    SHELVE[file_path] = File(file_info)
+                    console.log(f"[yellow]shelve[/yellow] [green]{file_path}[/green]")
+                files.append(file_path)
+        SHELVE[path] = Folder(path, folders, files)
         SHELVE.sync()
-        return SHELVE[idx]
+        return SHELVE[path]
 
 
 def cache_file(path: str):
@@ -99,39 +97,61 @@ def cache_file(path: str):
 
 class File:
     def __init__(self, file_info):
-        self.path = Path(file_info.file_name)
-        self.name = self.path.name
-        self.parent = self.path.parent
+        _path = Path(file_info.file_name)
+        self.path = str(_path)
+        self.name = _path.name
+        self.parent = str(_path.parent)
         self.hash = file_info.content_md5
         self.type = file_info.content_type
-        self.size = humanize_bytes(file_info.size)
+        self.size = utils.humanize_bytes(file_info.size)
         self.id = file_info.id_
-
-    def get_thumbnail(self, queue):
-        if self.type in content_types.video:
-            self.thumbnail = "/static/icons/video.svg"
-            self.thumbnail_classlist = "svg"
-        elif self.type in content_types.images:
-            thumbnail = paths.thumbs.joinpath(self.id + ".jpg")
-            self.thumbnail = "/" + str(thumbnail.relative_to(paths.home))
-            if not thumbnail.exists():
-                shutil.copy(paths.static.joinpath("icons", "cache.png"), thumbnail)
-                queue.put_nowait(self.id)
 
 
 class Folder:
-    def __init__(self, path):
-        self.path = Path(path)
-        self.name = self.path.name
-        self.parent = self.path.parent
+    def __init__(self, path, folders=[], files=[]):
+        _path = Path(path)
+        self.path = str(_path)
+        self.name = _path.name
+        self.parent = str(_path.parent)
+        self.folders = folders
+        self.files = files
+
+    def is_empty(self):
+        return len(self.folders) == len(self.files) == 0
+
+    def flatten(self):
+        folders = [SHELVE[f] for f in self.folders]
+        files = [SHELVE[f] for f in self.files]
+        return folders, files
+
+
+
+def queue_thumbnails(files, queue):
+    for file in files:
+        if hasattr(file, "thumbnail"):
+            continue
+
+        if file.type in content_types.video:
+            file.thumbnail = "/static/icons/video.svg"
+        elif file.type in content_types.images:
+            file.thumbnail = "/static/icons/cache.svg"
+            queue.put_nowait(file.path)
+        
+        if hasattr(file, "thumbnail"):
+            file.thumb_ext = Path(file.thumbnail).suffix[1:]
 
 
 async def thumbnail_worker(name, queue):
     while True:
-        file_id = await queue.get()
+        file_path = await queue.get()
+        file = SHELVE[file_path]
         console.log(
             f"[yellow]{name}[/yellow] [green]{queue.qsize()}[/green] [yellow]remaining[/yellow]"
         )
         loop = asyncio.get_event_loop()
         # For now the thumbnail generator is synchronous
-        await loop.run_in_executor(_executor, partial(generate_thumb, file_id))
+        await loop.run_in_executor(_executor, partial(generate_thumb, file.id))
+        file.thumbnail = "/" + str(paths.thumbs.joinpath(file.id + ".jpg").relative_to(paths.home))
+        file.thumb_ext = "jpg"
+        SHELVE[file_path] = file
+

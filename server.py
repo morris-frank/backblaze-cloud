@@ -33,9 +33,9 @@ async def single(request, path):
 
 @jinja.template("folder.html")
 async def folder(request, path):
-    folders, files = cloud.ls(path)
-    for file in files:
-        file.get_thumbnail(request.app.thumbnail_queue)
+    folder = cloud.ls(path)
+    folders, files = folder.flatten()
+    cloud.data.queue_thumbnails(files, request.app.thumbnail_queue)
     return {
         "folders": folders,
         "files": files,
