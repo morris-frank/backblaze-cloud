@@ -3,8 +3,8 @@
 # Delete the folder-content list cache
 rm -f .cache/ls_cache
 
-# Delete all Thumbnails
-# rm -f static/thumbnails/*
+# Delete all previews (thumbnails)
+rm -f static/previews/*
 
 # Compile Sass
 sassc static/main.scss static/main.css 

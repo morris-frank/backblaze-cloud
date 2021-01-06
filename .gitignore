@@ -1,6 +1,8 @@
-.python-version
 config.py
-static/*thumbnails
+
+.python-version
+.cache
+
 static/.webassets-cache
 static/data
-.cache
+static/previews

@@ -4,7 +4,7 @@
 <div class="folder">
     {% for folder in folders %}
     <a href="/{{ folder.path }}">
-        <div class="thumb svg">
+        <div class="preview svg">
             <img src="/static/icons/folder.svg">
         </div>
         <div class="name">{{ folder.name }}</div>
@@ -14,12 +14,12 @@
 
 <div class="folder">
     {% for file in files %}
-    <a href="/{{ file.path }}">
+    <a id="{{ file.id }}" href="/{{ file.path }}">
         <div class="meta">{{ file.size }}<br>{{ file.type }}</div>
         <div class="controls"></div>
-        {% if file.thumbnail %}
-        <div class="thumb {{ file.thumb_ext }}">
-            <img src="{{ file.thumbnail }}">
+        {% if file.preview_url %}
+        <div class="preview">
+            <img src="{{ file.preview_url }}">
         </div>
         {% endif %}
         <span class="name">{{ file.name }}</span>

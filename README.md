@@ -4,7 +4,7 @@
 ![GitHub](https://img.shields.io/github/license/morris-frank/backblaze-cloud)
 [![Issues](https://img.shields.io/github/issues/morris-frank/backblaze-cloud)](https://github.com/morris-frank/backblaze-cloud/issues)
 
-This is a little performant web app for browsing and viewing the contents of a B2 buckets. This is a read-only _cloud_ that generates thumbnails locally and caches the folder content lists to be performant.
+This is a little performant web app for browsing and viewing the contents of a B2 buckets. This is a read-only _cloud_ that generates thumbnails (previews) locally and caches the folder content lists to be performant.
 
 This is using:
 

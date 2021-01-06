@@ -28,19 +28,21 @@ def verify_password(username, password):
 
 
 @app.listener("after_server_start")
-def create_task_queue(app, loop):
-    app.thumbnail_queue = asyncio.LifoQueue(maxsize=10_000)
-    app.thread_executor = ThreadPoolExecutor(config.thread_pool_size)
+def create_task_queues(app, loop):
+    app.preview_queue = asyncio.LifoQueue(maxsize=10_000)
+    app.ws_updates_queue = asyncio.Queue(maxsize=10_000)
+
+    app.threaded_executor = ThreadPoolExecutor(config.thread_pool_size)
 
     for i in range(config.thread_pool_size):
         app.add_task(
             b2browser.preview.worker(
-                f"thumbnail_{i}", app.thumbnail_queue, app.thread_executor
+                f"preview_worker_{i}", app.threaded_executor, app.preview_queue, app.ws_updates_queue
             )
         )
 
 
-@jinja.template("file.html")
+@jinja.template("single.html")
 async def single(request, path):
     file = b2browser.LS_CACHE[path]
     src = b2browser.B2.cache(file.id, file.path)
@@ -54,7 +56,7 @@ async def single(request, path):
 @jinja.template("folder.html")
 async def folder(request, path):
     folders, files = b2browser.B2.ls(path)
-    b2browser.preview.queue(files, request.app.thumbnail_queue)
+    b2browser.preview.queue(files, request.app.preview_queue)
     return {
         "folders": folders,
         "files": files,
@@ -75,6 +77,14 @@ async def non_root(request, path: str):
         return await single(request, path)
     else:
         return await folder(request, path)
+
+
+@app.websocket('/updates')
+async def updates(request, ws):
+    while True:
+        update = await request.app.ws_updates_queue.get()
+        b2browser.console.log(f"[yellow]Sending:[/yellow] [green]{update}[/green]")
+        await ws.send(update)
 
 
 if __name__ == "__main__":
