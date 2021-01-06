@@ -60,3 +60,4 @@ def is_file(path: str):
 
 def is_cached_folder(path: str):
     return path in LS_CACHE and not LS_CACHE[path].is_empty()
+

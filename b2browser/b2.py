@@ -1,3 +1,4 @@
+import asyncio
 from pathlib import Path
 from shelve import Shelf
 
@@ -22,11 +23,11 @@ class __B2:
         progress_listener = b2sdk.DoNothingProgressListener()
         self.api.download_file_by_id(file_id, download_dest, progress_listener)
 
-    def ls(self, path: str) -> (list, list):
+    def ls(self, path: str, force: bool = False) -> (list, list):
         path = path.strip("/")
         console.log(f"[yellow]ls [/yellow] [green]{path}[/green]")
 
-        if not ls_cache.is_cached_folder(path):
+        if not ls_cache.is_cached_folder(path) or force:
             folders, files = [], []
             for file_info, folder_path in self.bucket.ls(path, show_versions=False):
                 if folder_path is None:
@@ -48,3 +49,19 @@ class __B2:
 
 
 B2 = __B2()
+
+
+async def worker(name: str, queue_in: asyncio.Queue, queue_out: asyncio.Queue, jinja):
+    while True:
+        path = await queue_in.get()
+
+        console.log(
+            f"[yellow]{name}[/yellow] [green]{queue_in.qsize()}[/green] [yellow]remain[/yellow]"
+        )
+        folders, files = B2.ls(path, True)
+
+        template = jinja.env.get_template('folder_content.html')
+        html = template.render(folders=folders, files=files, path=path)
+        queue_out.put_nowait(
+            {"type": "folder", "path": path, "content": html}
+        )

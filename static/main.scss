@@ -11,11 +11,14 @@ a {
 }
 
 .folder {
-    display: flex;
-    flex-flow: row wrap;
-    align-items: flex-start;
-    justify-content: center;
-    gap: 10px;
+
+    section {
+        display: flex;
+        flex-flow: row wrap;
+        align-items: flex-start;
+        justify-content: center;
+        gap: 10px;
+    }
 
     a {
         width: 200px;

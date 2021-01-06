@@ -6,55 +6,56 @@ body {
 a {
   color: #222; }
 
-.folder {
+.folder section {
   display: flex;
   flex-flow: row wrap;
   align-items: flex-start;
   justify-content: center;
   gap: 10px; }
-  .folder a {
+
+.folder a {
+  width: 200px;
+  box-shadow: 0px 3px 3px rgba(0, 0, 0, 0.1);
+  background-color: white;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  text-decoration: none;
+  transition: 100ms;
+  position: relative; }
+  .folder a:hover {
+    box-shadow: 0px 3px 3px rgba(0, 0, 0, 0.15);
+    background-color: rgba(0, 0, 0, 0.01); }
+  .folder a .preview {
     width: 200px;
-    box-shadow: 0px 3px 3px rgba(0, 0, 0, 0.1);
-    background-color: white;
-    border: 1px solid #ccc;
-    border-radius: 3px;
-    text-decoration: none;
-    transition: 100ms;
-    position: relative; }
-    .folder a:hover {
-      box-shadow: 0px 3px 3px rgba(0, 0, 0, 0.15);
-      background-color: rgba(0, 0, 0, 0.01); }
-    .folder a .preview {
-      width: 200px;
-      height: 150px;
-      overflow: hidden;
-      display: flex;
-      justify-content: center;
-      align-items: center; }
-      .folder a .preview img[src$=".svg"] {
+    height: 150px;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center; }
+    .folder a .preview img[src$=".svg"] {
+      height: 100%; }
+    .folder a .preview.svg {
+      height: 50px; }
+      .folder a .preview.svg img {
         height: 100%; }
-      .folder a .preview.svg {
-        height: 50px; }
-        .folder a .preview.svg img {
-          height: 100%; }
-    .folder a .name {
-      font-size: 0.7em;
-      word-wrap: anywhere;
-      display: inline-block;
-      line-height: 1.2;
-      margin: 0.5em 0.4em 0.5em 1em; }
-    .folder a .meta {
-      font-size: 0.7em;
-      position: absolute;
-      right: 0;
-      top: 0;
-      display: none;
-      background-color: rgba(255, 255, 255, 0.9);
-      padding: 0.4em;
-      z-index: 2;
-      text-align: right; }
-    .folder a:hover .meta {
-      display: block; }
+  .folder a .name {
+    font-size: 0.7em;
+    word-wrap: anywhere;
+    display: inline-block;
+    line-height: 1.2;
+    margin: 0.5em 0.4em 0.5em 1em; }
+  .folder a .meta {
+    font-size: 0.7em;
+    position: absolute;
+    right: 0;
+    top: 0;
+    display: none;
+    background-color: rgba(255, 255, 255, 0.9);
+    padding: 0.4em;
+    z-index: 2;
+    text-align: right; }
+  .folder a:hover .meta {
+    display: block; }
 
 .file img {
   max-width: 95%;

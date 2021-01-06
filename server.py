@@ -1,8 +1,8 @@
 import asyncio
+import json
 from concurrent.futures import ThreadPoolExecutor
 
-from sanic import Sanic
-from sanic import response
+from sanic import Sanic, response
 from sanic_jinja2 import SanicJinja2
 from sanic_httpauth import HTTPBasicAuth
 
@@ -29,15 +29,19 @@ def verify_password(username, password):
 
 @app.listener("after_server_start")
 def create_task_queues(app, loop):
-    app.preview_queue = asyncio.LifoQueue(maxsize=10_000)
-    app.ws_updates_queue = asyncio.Queue(maxsize=10_000)
-
     app.threaded_executor = ThreadPoolExecutor(config.thread_pool_size)
 
+    app.updates_queue = asyncio.Queue(maxsize=1_000)
+    app.ls_queue = asyncio.LifoQueue(maxsize=100)
+    app.add_task(b2browser.b2.worker(
+        f"ls_worker", app.ls_queue, app.updates_queue, jinja
+    ))
+
+    app.preview_queue = asyncio.LifoQueue(maxsize=10_000)
     for i in range(config.thread_pool_size):
         app.add_task(
             b2browser.preview.worker(
-                f"preview_worker_{i}", app.threaded_executor, app.preview_queue, app.ws_updates_queue
+                f"preview_worker_{i}", app.threaded_executor, app.preview_queue, app.updates_queue
             )
         )
 
@@ -50,17 +54,19 @@ async def single(request, path):
         "src": src,
         "file": file,
         "breadcrumb": b2browser.utils.make_crumbs(path),
+        "path": path
     }
 
 
 @jinja.template("folder.html")
 async def folder(request, path):
     folders, files = b2browser.B2.ls(path)
-    b2browser.preview.queue(files, request.app.preview_queue)
+    b2browser.preview.put(files, request.app.preview_queue)
     return {
         "folders": folders,
         "files": files,
         "breadcrumb": b2browser.utils.make_crumbs(path),
+        "path": path
     }
 
 
@@ -80,11 +86,23 @@ async def non_root(request, path: str):
 
 
 @app.websocket('/updates')
-async def updates(request, ws):
+async def updates_out(request, ws):
     while True:
-        update = await request.app.ws_updates_queue.get()
-        b2browser.console.log(f"[yellow]Sending:[/yellow] [green]{update}[/green]")
-        await ws.send(update)
+        update = await request.app.updates_queue.get()
+        # b2browser.console.log(f"[yellow]Sending:[/yellow] [green]{update}[/green]")
+        await ws.send(json.dumps(update))
+
+
+@app.websocket('/update')
+async def updates_in(request, ws):
+    while True:
+        data = await ws.recv()
+        data = json.loads(data)
+
+        b2browser.console.log(f"[yellow]Wants:[/yellow] [green]{data}[/green]")
+        if data["type"] == "folder":
+            app.ls_queue.put_nowait(data["path"])
+
 
 
 if __name__ == "__main__":

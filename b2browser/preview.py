@@ -1,5 +1,4 @@
 import asyncio
-import json
 from functools import partial
 from pathlib import Path
 
@@ -67,12 +66,14 @@ def make_preview(file_path: str, updates_queue: asyncio.Queue):
         cached_file.unlink()
 
         file.preview_url = preview_url(file.id)
-        updates_queue.put_nowait(json.dumps({"type": "preview", "id": file.id, "url": file.preview_url}))
+        updates_queue.put_nowait(
+            {"type": "preview", "id": file.id, "url": file.preview_url}
+        )
     else:
         file.preview_url = preview.default
 
 
-def queue(files, queue: asyncio.Queue):
+def put(files, queue: asyncio.Queue):
     for file in files:
         # This file has a cached preview
         if not file.waiting_for_preview:
@@ -90,13 +91,17 @@ def queue(files, queue: asyncio.Queue):
         queue.put_nowait(file.path)
 
 
-async def worker(name: str, executor, queue_in: asyncio.Queue, queue_out: asyncio.Queue):
+async def worker(
+    name: str, executor, queue_in: asyncio.Queue, queue_out: asyncio.Queue
+):
     while True:
         file_path = await queue_in.get()
 
         # For now the preview generator is synchronous
         loop = asyncio.get_event_loop()
-        await loop.run_in_executor(executor, partial(make_preview, file_path, queue_out))
+        await loop.run_in_executor(
+            executor, partial(make_preview, file_path, queue_out)
+        )
 
         console.log(
             f"[yellow]{name}[/yellow] [green]{queue_in.qsize()}[/green] [yellow]remain[/yellow]"

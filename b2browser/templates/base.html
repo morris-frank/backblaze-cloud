@@ -9,7 +9,7 @@
         <script src="/static/main.js"></script>
     </head>
     <body>
-        <div class="breadcrumb">
+        <nav class="breadcrumb">
             {% if breadcrumb %}
             <ul>
                 {% for crumb in breadcrumb %}
@@ -17,7 +17,7 @@
                 {% endfor %}
             </ul>
             {% endif %}
-        </div>
+        </nav>
         {% block content %}{% endblock %}
     </body>
 </html>
