@@ -1,5 +1,6 @@
 from typing import Union
 import shelve
+import os
 
 from . import paths, utils
 
@@ -10,6 +11,7 @@ LS_CACHE = shelve.open(str(paths.ls_cache), writeback=True)
 class File:
     def __init__(self, file_info):
         self.path = file_info.file_name
+        self.ext = os.path.splitext(self.path)[1]
         self.name = self.path.split("/")[-1]
         self.hash = file_info.content_md5
         self.type = file_info.content_type

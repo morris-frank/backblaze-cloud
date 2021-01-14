@@ -51,6 +51,9 @@ def default_preview(preview_type: str):
 
 def make_preview(file_path: str, updates_queue: asyncio.Queue):
     file = ls_cache.LS_CACHE[file_path]
+    if file.preview_type not in preview_types:
+        return
+
     preview = preview_types[file.preview_type]
 
     if preview_path(file.id).exists():
@@ -58,7 +61,7 @@ def make_preview(file_path: str, updates_queue: asyncio.Queue):
 
     if hasattr(preview, "make_preview"):
         # Download the file to the local previw cache folder
-        cached_file = paths.preview_cache.joinpath(file.id)
+        cached_file = paths.preview_cache.joinpath(f"{file.id}{file.ext}")
         B2.download(file.id, str(cached_file))
 
         preview.make_preview(cached_file, preview_path(file.id))
@@ -87,9 +90,10 @@ def put(files, queue: asyncio.Queue):
             continue
 
         file.preview_type = determine_preview_type(file.type)
-        file.preview_url = default_preview(file.preview_type)
+        if file.preview_type in preview_types:
+            file.preview_url = default_preview(file.preview_type)
 
-        queue.put_nowait(file.path)
+            queue.put_nowait(file.path)
 
 
 async def worker(

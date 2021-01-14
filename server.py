@@ -21,9 +21,10 @@ b2browser.B2.setup(
 
 @auth.verify_password
 def verify_password(username, password):
+        # and b2browser.utils.hash_password(config.app_salt, password) == config.password
     return (
         username == config.username
-        and b2browser.utils.hash_password(config.app_salt, password) == config.password
+        and password == config.password
     )
 
 
