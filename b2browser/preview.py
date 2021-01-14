@@ -24,9 +24,10 @@ class VideoPreview:
 
 
 class ImagePreview:
-    types = ("image/jpeg",)
+    types = ("image/jpeg", "image/png")
     default = "/static/icons/cache.svg"
 
+    @staticmethod
     def make_preview(input_path: Path, output_path: Path):
         im = Image.open(input_path)
         factor = max(preview_size[0] / im.width, preview_size[1] / im.height)
